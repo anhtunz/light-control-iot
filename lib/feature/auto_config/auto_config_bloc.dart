@@ -59,22 +59,23 @@ class AutoConfigBloc extends BlocBase {
     }
   }
 
-  Future<void> _scanWiFiNetworks() async {
-    try {
-      await WiFiScan.instance.startScan();
-      final results = await WiFiScan.instance.getScannedResults();
+Future<void> _scanWiFiNetworks() async {
+  try {
+    await WiFiScan.instance.startScan();
+    final results = await WiFiScan.instance.getScannedResults();
 
-      final targetAP = results.firstWhere(
-        (ap) => ap.ssid.contains('LED_HAI_PHONG'),
-        orElse: () => throw Exception('Target device not found'),
-      );
+    final targetAP = results.firstWhere(
+      (ap) => ap.ssid.toLowerCase().contains('lhp-smart-m1'.toLowerCase()),
+      orElse: () => throw Exception('Target device not found'),
+    );
 
-      _startSmartConfig(targetAP);
-    } catch (e) {
-      // Schedule next scan after 5 seconds
-      _scanTimer = Timer(const Duration(seconds: 5), _startScanning);
-    }
+    _startSmartConfig(targetAP);
+  } catch (e) {
+    // Retry scan sau 5 giây nếu chưa tìm thấy
+    _scanTimer = Timer(const Duration(seconds: 5), _startScanning);
   }
+}
+
 
   Future<void> _startSmartConfig(WiFiAccessPoint ap) async {
     _configSink.add(AutoConfigStatus(
